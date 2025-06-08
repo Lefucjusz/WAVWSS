@@ -13,6 +13,6 @@ struct buffer_t
 };
 
 int buffer_allocate(struct buffer_t *buffer);
-void buffer_free(const struct buffer_t *buffer);
+void buffer_free(struct buffer_t *buffer);
 
 #endif

@@ -60,7 +60,7 @@ int dma_release(uint8_t channel)
 	outp(DMAC_MASK_REG, DMAC_MASK_CHANNEL_BIT | channel);
 
 	/* Clear executing data transfers */
-	outp(DMAC_MASK_REG, 0x00);
+	outp(DMAC_CLEAR_FF_REG, 0x00);
 
 	/* Unmask the channel */
 	outp(DMAC_MASK_REG, channel);

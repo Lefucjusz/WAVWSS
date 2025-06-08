@@ -1,6 +1,8 @@
 #ifndef __PLAYER_H__
 #define __PLAYER_H__
 
+#include "stdint.h"
+
 enum player_state_t
 {
     PLAYER_STOPPED,
@@ -17,6 +19,8 @@ int player_resume(void);
 int player_stop(void);
 
 enum player_state_t player_get_state(void);
+uint32_t player_get_seconds_played(void);
+uint32_t player_get_seconds_total(void);
 
 void player_task(void);
 

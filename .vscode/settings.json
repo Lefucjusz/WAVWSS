@@ -4,6 +4,13 @@
         "MAIN.C": "cpp",
         "PLAYER.C": "cpp",
         "LIST.C": "cpp",
-        "DMA.C": "cpp"
+        "DMA.C": "cpp",
+        "BUFFER.C": "cpp",
+        "GUI.C": "cpp",
+        "WAV.C": "cpp",
+        "WSS.C": "cpp",
+        "array": "cpp",
+        "string": "cpp",
+        "string_view": "cpp"
     }
 }

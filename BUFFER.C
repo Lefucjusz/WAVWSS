@@ -48,11 +48,12 @@ int buffer_allocate(struct buffer_t *buffer)
 	return 0;
 }
 
-void buffer_free(const struct buffer_t *buffer)
+void buffer_free(struct buffer_t *buffer)
 {
-	if (buffer == NULL) {
+	if ((buffer == NULL) || (buffer->data == NULL)) {
 		return;
 	}
 
 	free(buffer->data);
+	buffer->data = NULL;
 }

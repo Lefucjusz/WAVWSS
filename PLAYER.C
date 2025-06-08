@@ -1,5 +1,6 @@
 #include "player.h"
 #include "wss.h"
+#include "wav.h"
 #include "irq.h"
 #include "buffer.h"
 #include "errno.h"
@@ -14,6 +15,8 @@ static volatile bool wss_request;
 static enum player_state_t state;
 static struct buffer_t buffer;
 static uint8_t buffer_index;
+static uint32_t bytes_played;
+static uint32_t bytes_total;
 static FILE *fd;
 
 static void interrupt player_irq_handler(void)
@@ -58,6 +61,7 @@ void player_deinit(void)
 int player_start(const char *path)
 {
     int err;
+    uint32_t bytes_read;
 
     /* Stopped player if not stopped yet */
     if (state != PLAYER_STOPPED) {
@@ -67,6 +71,7 @@ int player_start(const char *path)
     /* Set initial state */
     wss_request = false;
     buffer_index = 0;
+    bytes_played = 0;
 
     /* Open WAV file */
     fd = fopen(path, "rb");
@@ -74,14 +79,16 @@ int player_start(const char *path)
         return -ENOENT;
     }
 
-    /* Skip WAV header */
-    err = wav_skip_header(fd);
-    if (err == 0) {
+    /* Skip WAV header and get PCM data size */
+    bytes_total = wav_skip_header(fd);
+    if (bytes_total == 0) {
+        fclose(fd);
         return -EIO;
     }
 
     /* Preload buffer */
-    fread(buffer.data, sizeof(*buffer.data), BUFFER_SIZE_BYTES, fd);
+    bytes_read = fread(buffer.data, sizeof(*buffer.data), BUFFER_SIZE_BYTES, fd);
+    bytes_played += bytes_read;
 
     /* Start DMA */
     dma_autoinit_start(WSS_DMA_CHANNEL, buffer.page, buffer.offset, BUFFER_SIZE_BYTES);
@@ -89,6 +96,7 @@ int player_start(const char *path)
     /* Start playback */
     err = wss_playback_start(BUFFER_SIZE_BYTES);
     if (err) {
+        fclose(fd);
         return err;
     }
 
@@ -151,6 +159,16 @@ enum player_state_t player_get_state(void)
     return state;
 }
 
+uint32_t player_get_seconds_played(void)
+{
+    return bytes_played / WAV_BYTES_PER_SECOND;
+}
+
+uint32_t player_get_seconds_total(void)
+{
+    return bytes_total / WAV_BYTES_PER_SECOND;
+}
+
 void player_task(void)
 {
     uint32_t offset;
@@ -164,6 +182,7 @@ void player_task(void)
 
     if (wss_request) {
         bytes_read = fread(&buffer.data[offset], sizeof(*buffer.data), PLAYER_SINGLE_BUFFER_SIZE, fd);
+        bytes_played += bytes_read;
         if (bytes_read == 0) {
             player_stop();
         }

@@ -1,16 +1,14 @@
 #include "wss.h"
+#include "wav.h"
 #include "utils.h"
 #include "errno.h"
 #include <dos.h>
 #include <stddef.h>
 
 #define WSS_TIMEOUT_LOOPS 10000
-
-#define WSS_SAMPLE_SIZE sizeof(int16_t)
-#define WSS_CHANNELS_NUM 2
 #define WSS_BUFFERS_NUM 2 // Double buffering - generate interrupt when each half of buffer transferred
 
-#define WSS_BYTES_TO_DMA_COUNT(x) (((x) / (WSS_SAMPLE_SIZE * WSS_CHANNELS_NUM * WSS_BUFFERS_NUM)) - 1)
+#define WSS_BYTES_TO_DMA_COUNT(x) (((x) / (WAV_SAMPLE_SIZE_BYTES * WAV_CHANNELS_NUM * WSS_BUFFERS_NUM)) - 1)
 
 /* Wait until soundcard ready */
 static int wss_wait(void)

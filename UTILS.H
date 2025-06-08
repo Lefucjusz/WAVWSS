@@ -8,4 +8,6 @@
 
 #define ARRAY_COUNT(x) (sizeof(x) / sizeof((x)[0]))
 
+#define MEMBER_SIZE(type, member) (sizeof(((type *)0)->member))
+
 #endif

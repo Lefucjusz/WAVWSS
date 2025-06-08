@@ -7,9 +7,11 @@
 
 int main(int argc, char *argv[])
 {
+    int err;
     char last_key;
     const char *dir_path;
 
+    clrscr();
     printf("WAVWSS - play WAV files through WSS compatible soundcard\n");
     printf("(c) Lefucjusz, Warszawa 2025\n\n");
 
@@ -20,16 +22,31 @@ int main(int argc, char *argv[])
 
     dir_path = argv[1];
 
-    player_init();
-    gui_init(dir_path);
+    err = player_init();
+    if (err) {
+        printf("Failed to init player module, error %d!\n", err);
+        goto out_error;
+    }
+
+    err = gui_init(dir_path);
+    if (err) {
+        if (err == -ENOENT) {
+            printf("No WAV files found in a specified location!\n");
+        }
+        else {
+            printf("Failed to initialize GUI module, error %d!\n", err);
+        }
+        goto out_error;
+    }
 
     do {
         player_task();
         last_key = gui_task();
     } while (last_key != GUI_KEY_EXIT);
 
+out_error:
     gui_deinit();
     player_deinit();
 
-    return 0;
+    return err;
 }
