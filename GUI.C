@@ -4,6 +4,7 @@
 #include "errno.h"
 #include "player.h"
 #include "utils.h"
+#include "natsort.h"
 #include <conio.h>
 #include <dir.h>
 #include <stdio.h>
@@ -28,7 +29,7 @@ static bool gui_compare_ascending(const void *val1, const void *val2)
     const struct gui_track_t *track1 = val1;
     const struct gui_track_t *track2 = val2;
 
-    return (strcmp(track1->name, track2->name) > 0); // TODO add natsort
+    return (strnatcmp(track1->name, track2->name) > 0);
 }
 
 static uint32_t gui_get_pcm_data_size(const char *path)
@@ -98,7 +99,7 @@ static void gui_show_files_list(void)
     do {
         track = file->data;
 
-        printf("| %02lu. %-11s | %02lu:%02lu  |\n", track_num, track->name, track->length / 60, track->length % 60);
+	printf("| %02lu. %-11s| %02lu:%02lu  |\n", track_num, track->name, track->length / 60, track->length % 60);
         length_total += track->length;
         ++track_num;
 
