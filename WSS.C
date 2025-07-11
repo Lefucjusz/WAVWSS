@@ -1,14 +1,43 @@
 #include "wss.h"
 #include "wav.h"
 #include "utils.h"
-#include "errno.h"
+#include <errno.h>
 #include <dos.h>
 #include <stddef.h>
 
 #define WSS_TIMEOUT_LOOPS 10000
 #define WSS_BUFFERS_NUM 2 // Double buffering - generate interrupt when each half of buffer transferred
+#define WSS_SAMPLE_SIZE_BYTES sizeof(int16_t) // TODO this should be autodetected too
 
-#define WSS_BYTES_TO_DMA_COUNT(x) (((x) / (WAV_SAMPLE_SIZE_BYTES * WAV_CHANNELS_NUM * WSS_BUFFERS_NUM)) - 1)
+struct wss_config_map_t
+{
+	uint32_t sample_rate;
+	uint8_t css;
+	uint8_t cfs;
+};
+
+/* WSS supports more, but these are the most popular */
+static const struct wss_config_map_t config_map[] =
+{
+	{8000UL,	0,		0},
+	{11025UL,	WSS_CSS_BIT,	WSS_CFS0_BIT},
+	{16000UL,	0,		WSS_CFS0_BIT},
+	{22050UL,	WSS_CSS_BIT,	WSS_CFS1_BIT | WSS_CFS0_BIT},
+	{32000UL,	0,		WSS_CFS1_BIT | WSS_CFS0_BIT},
+	{44100UL,	WSS_CSS_BIT,	WSS_CFS2_BIT | WSS_CFS0_BIT},
+	{48000UL,	0,		WSS_CFS2_BIT | WSS_CFS1_BIT}
+};
+
+static const struct wss_config_map_t *wss_get_sample_rate_config(uint32_t sample_rate)
+{
+	uint8_t i;
+	for (i = 0; i < ARRAY_COUNT(config_map); ++i) {
+		if (config_map[i].sample_rate == sample_rate) {
+			return &config_map[i];
+		}
+	}
+	return NULL;
+}
 
 /* Wait until soundcard ready */
 static int wss_wait(void)
@@ -18,7 +47,7 @@ static int wss_wait(void)
 
 	while ((wss_read_direct(WSS_INDEX_REG) & WSS_INIT_BIT) != 0) {
 		if (timeout == 0) {
-			err = -ETIMEDOUT;
+			err = -EBUSY;
 			break;
 		}
 		--timeout;
@@ -68,9 +97,18 @@ int wss_write_indirect(uint8_t addr, uint8_t data)
 	return 0;
 }
 
-int wss_playback_start(uint32_t buffer_size)
+int wss_playback_start(uint32_t buffer_size, uint32_t sample_rate, uint8_t channels)
 {
 	int err;
+	uint8_t format_reg;
+	uint16_t dma_count;
+	const struct wss_config_map_t *config;
+
+	/* Get sample rate config */
+	config = wss_get_sample_rate_config(sample_rate);
+	if (config == NULL) {
+		return -EINVFMT;
+	}
 
 	/* Configure line-in */
 	err = wss_write_indirect(WSS_LADC_REG, 0x00); // 0dB gain, disable left mic +20dB gain, ADC input from left line
@@ -107,7 +145,7 @@ int wss_playback_start(uint32_t buffer_size)
 	if (err) {
 		return err;
 	}
-	err = wss_write_indirect(WSS_RDAC_REG, 0x00);  // 0dB attenuation, unmute right channel
+	err = wss_write_indirect(WSS_RDAC_REG, 0x00); // 0dB attenuation, unmute right channel
 	if (err) {
 		return err;
 	}
@@ -125,17 +163,22 @@ int wss_playback_start(uint32_t buffer_size)
 	}
 
 	/* Configure DMA count */
-	err = wss_write_indirect(WSS_PLAYBACK_LCNT_REG, LO_BYTE(WSS_BYTES_TO_DMA_COUNT(buffer_size)));
+	dma_count = (buffer_size / (WSS_SAMPLE_SIZE_BYTES * channels * WSS_BUFFERS_NUM)) - 1;
+	err = wss_write_indirect(WSS_PLAYBACK_LCNT_REG, LO_BYTE(dma_count));
 	if (err) {
 		return err;
 	}
-	err = wss_write_indirect(WSS_PLAYBACK_UCNT_REG, HI_BYTE(WSS_BYTES_TO_DMA_COUNT(buffer_size)));
+	err = wss_write_indirect(WSS_PLAYBACK_UCNT_REG, HI_BYTE(dma_count));
 	if (err) {
 		return err;
 	}
 
 	/* Configure data format */
-	err = wss_write_indirect(WSS_FORMAT_REG | WSS_MCE_BIT, WSS_FMT_BIT | WSS_S_M_BIT | WSS_CFS2_BIT | WSS_CFS0_BIT | WSS_CSS_BIT);  // 16-bit stereo signed PCM, 44.1kHz
+	format_reg = WSS_FMT_BIT | config->cfs | config->css;
+	if (channels == 2) {
+		format_reg |= WSS_S_M_BIT;
+	}
+	err = wss_write_indirect(WSS_FORMAT_REG | WSS_MCE_BIT, format_reg);
 	if (err) {
 		return err;
 	}

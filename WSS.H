@@ -13,7 +13,7 @@ int wss_read_indirect(uint8_t addr, uint8_t *data);
 int wss_write_indirect(uint8_t addr, uint8_t data);
 
 /* Playback control */
-int wss_playback_start(uint32_t buffer_size);
+int wss_playback_start(uint32_t buffer_size, uint32_t sample_rate, uint8_t channels);
 int wss_playback_stop(void);
 int wss_playback_continue(void);
 

@@ -4,13 +4,23 @@
 #include <stdio.h>
 #include "stdint.h"
 
-/* TODO detect those dynamically */
-#define WAV_SAMPLE_RATE_HZ 44100
-#define WAV_SAMPLE_SIZE_BYTES sizeof(int16_t)
-#define WAV_CHANNELS_NUM 2
+struct wav_header_t
+{
+	char riff_header[4];
+	uint32_t wav_size;
+	char wave_header[4];
+	char fmt_header[4];
+	uint32_t fmt_chunk_size;
+	uint16_t audio_format;
+	uint16_t num_channels;
+	uint32_t sample_rate;
+	uint32_t byte_rate;
+	uint16_t sample_align;
+	uint16_t bit_depth;
+	char data_header[4];
+	uint32_t data_size;
+};
 
-#define WAV_BYTES_PER_SECOND (WAV_SAMPLE_RATE_HZ * WAV_SAMPLE_SIZE_BYTES * WAV_CHANNELS_NUM)
-
-uint32_t wav_skip_header(FILE *fd);
+int wav_parse_header(FILE *fd, struct wav_header_t *header);
 
 #endif

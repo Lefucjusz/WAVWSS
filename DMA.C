@@ -1,6 +1,6 @@
 #include "dma.h"
 #include "utils.h"
-#include "errno.h"
+#include <errno.h>
 #include <dos.h>
 
 #define DMAC_MASK_REG 0x0A

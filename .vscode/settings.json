@@ -12,6 +12,7 @@
         "array": "cpp",
         "string": "cpp",
         "string_view": "cpp",
-        "NATSORT.C": "cpp"
+        "NATSORT.C": "cpp",
+        "IRQ.C": "cpp"
     }
 }

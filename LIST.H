@@ -6,9 +6,9 @@
 
 struct list_node_t
 {
-    void *data;
-    struct list_node_t *prev;
-    struct list_node_t *next;
+	void *data;
+	struct list_node_t *prev;
+	struct list_node_t *next;
 };
 
 struct list_t

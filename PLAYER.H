@@ -5,9 +5,9 @@
 
 enum player_state_t
 {
-    PLAYER_STOPPED,
-    PLAYER_PAUSED,
-    PLAYER_PLAYING
+	PLAYER_STOPPED,
+	PLAYER_PAUSED,
+	PLAYER_PLAYING
 };
 
 int player_init(void);

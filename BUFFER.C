@@ -1,7 +1,7 @@
 #include "buffer.h"
-#include "errno.h"
 #include "stdint.h"
 #include <dos.h>
+#include <errno.h>
 #include <stdlib.h>
 
 static uint32_t buffer_to_linear(const void *buffer)

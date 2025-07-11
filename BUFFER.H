@@ -7,9 +7,9 @@
 
 struct buffer_t
 {
-    uint8_t *data;
-    uint8_t page;
-    uint16_t offset;
+	uint8_t *data;
+	uint8_t page;
+	uint16_t offset;
 };
 
 int buffer_allocate(struct buffer_t *buffer);

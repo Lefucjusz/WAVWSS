@@ -3,8 +3,8 @@
 
 /* TODO read this dynamically or allow to configure it */
 #define WSS_BASE 0x530
-#define WSS_DMA_CHANNEL 1
-#define WSS_IRQ_NUM 5
+#define WSS_DMA_CHANNEL 3
+#define WSS_IRQ_NUM 7
 
 /* NOTE: All of the definitions below were obtained from AD1848 datasheet */
 
