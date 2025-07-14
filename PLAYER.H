@@ -18,6 +18,8 @@ int player_pause(void);
 int player_resume(void);
 int player_stop(void);
 
+int player_set_volume(uint8_t percent);
+
 enum player_state_t player_get_state(void);
 uint32_t player_get_seconds_played(void);
 uint32_t player_get_seconds_total(void);

@@ -1,19 +1,14 @@
 #ifndef __WSSDEFS_H__
 #define __WSSDEFS_H__
 
-/* TODO read this dynamically or allow to configure it */
-#define WSS_BASE 0x530
-#define WSS_DMA_CHANNEL 3
-#define WSS_IRQ_NUM 7
-
 /* NOTE: All of the definitions below were obtained from AD1848 datasheet */
 
-/* Direct registers definitions */
-#define WSS_INDEX_REG (WSS_BASE + 4)
-#define WSS_IDATA_REG (WSS_BASE + 5)
-#define WSS_STATUS_REG (WSS_BASE + 6)
+/* Direct registers offsets from base address */
+#define WSS_INDEX_REG_OFFSET 4
+#define WSS_IDATA_REG_OFFSET 5
+#define WSS_STATUS_REG_OFFSET 6
 
-/* Indirect registers definitions */
+/* Indirect registers */
 #define WSS_LADC_REG 0x00
 #define WSS_RADC_REG 0x01
 #define WSS_LAUX1_REG 0x02
@@ -31,15 +26,20 @@
 #define WSS_PLAYBACK_UCNT_REG 0x0E
 #define WSS_PLAYBACK_LCNT_REG 0x0F
 
-/* Direct registers bit definitions */
+/* Direct registers fields */
 /* WSS_INDEX_REG bits */
 #define WSS_INIT_BIT (1 << 7)
 #define WSS_MCE_BIT (1 << 6)
 #define WSS_TRD_BIT (1 << 5)
 
-/* Indirect registers bit definitions */
+/* Indirect registers fields */
 /* WSS_LAUX1_REG, WSS_RAUX1_REG, WSS_LAUX2_REG & WSS_RAUX2_REG bits */
 #define WSS_AUX_MUTE_BIT (1 << 7)
+
+/* WSS_LDAC_REG & WSS_RDAC_REG fields */
+#define WSS_DAC_MUTE_BIT (1 << 7)
+#define WSS_DAC_ATTEN_BITS 6
+#define WSS_DAC_ATTEN_MAX_VAL ((1 << WSS_DAC_ATTEN_BITS) - 1) // -94.5dB attenuation
 
 /* WSS_FORMAT_REG bits */
 #define WSS_FMT_BIT (1 << 6)

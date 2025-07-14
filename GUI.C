@@ -12,6 +12,9 @@
 #define GUI_PLAY_CHAR '>'
 #define GUI_PAUSE_CHAR '='
 
+#define GUI_VOLUME_STEP 2
+#define GUI_INITIAL_VOLUME 50
+
 struct gui_track_t
 {
 	char name[MEMBER_SIZE(struct ffblk, ff_name)];
@@ -23,6 +26,7 @@ static struct list_node_t *current;
 static uint32_t last_elapsed_time;
 static enum player_state_t last_player_state;
 static char prev_cwd[128];
+static int8_t volume;
 
 static bool gui_compare_ascending(const void *val1, const void *val2)
 {
@@ -94,11 +98,11 @@ static void gui_show_files_list(void)
 	struct list_node_t *file = files->head;
 	struct gui_track_t *track;
 
-	printf("----------------------------\tControl:\n");
-	printf("---------- Tracks ----------\t[ESC] - leave to DOS\n");
-	printf("----------------------------\t[I] - previous track\n");
-	printf("|      Track      |  Time  |\t[O] - next track\n");
-	printf("|-----------------|--------|\t[P] - pause/resume\n");
+	printf("----------------------------\tControls:\n");
+	printf("---------- Tracks ----------\t[ESC] - leave to DOS\t[I] - previous track\n");
+	printf("----------------------------\t[Y] - volume down\t[O] - next track\n");
+	printf("|      Track      |  Time  |\t[U] - volume up\t\t[P] - pause/resume\n");
+	printf("|-----------------|--------|\n");
 
 	do {
 		track = file->data;
@@ -137,6 +141,10 @@ int gui_init(const char *path)
 	/* Show files list */
 	gui_show_files_list();
 
+	/* Set volume */
+	volume = GUI_INITIAL_VOLUME;
+	player_set_volume(volume);
+
 	/* Start playback of the first song */
 	current = files->head;
 	track = current->data;
@@ -165,14 +173,18 @@ int gui_task(void)
 	uint32_t elapsed_time;
 	enum player_state_t player_state;
 
-	/* Update track info */
+	/* Update track info. This should refresh also if the volume
+	 * has been changed, but on Xi8088 this causes audio buffer
+	 * underruns if the volume is changed quickly. On faster
+	 * machines this shouldn't be an issue. */
 	elapsed_time = player_get_seconds_played();
 	player_state = player_get_state();
-	if ((last_elapsed_time != elapsed_time) || (last_player_state != player_state)) {
+	if ((last_elapsed_time != elapsed_time) ||
+		(last_player_state != player_state)) {
 		track = current->data;
 		track_state = (player_state == PLAYER_PLAYING) ? GUI_PLAY_CHAR : GUI_PAUSE_CHAR;
 
-		printf("Now playing: [%c] %s (%02lu:%02lu/%02lu:%02lu) \r", track_state, track->name, elapsed_time / 60, elapsed_time % 60, track->length / 60, track->length % 60);
+		printf("Now playing: [%c] %s (%02lu:%02lu/%02lu:%02lu) | Volume: %d%%  \r", track_state, track->name, elapsed_time / 60, elapsed_time % 60, track->length / 60, track->length % 60, (int)volume);
 
 		last_elapsed_time = elapsed_time;
 		last_player_state = player_state;
@@ -239,6 +251,18 @@ int gui_task(void)
 				default:
 					break;
 			}
+			break;
+
+		case GUI_KEY_VOLUME_UP:
+			volume += GUI_VOLUME_STEP;
+			volume = CLAMP(volume, PERCENT_MIN, PERCENT_MAX);
+			player_set_volume(volume);
+			break;
+
+		case GUI_KEY_VOLUME_DOWN:
+			volume -= GUI_VOLUME_STEP;
+			volume = CLAMP(volume, PERCENT_MIN, PERCENT_MAX);
+			player_set_volume(volume);
 			break;
 
 		default:

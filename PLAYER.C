@@ -23,7 +23,7 @@ static FILE *fd;
 static void interrupt player_irq_handler(void)
 {
 	wss_request = true;
-	outp(WSS_STATUS_REG, 0x00); // Clear WSS interrupt bit
+	wss_write_direct(WSS_STATUS_REG_OFFSET, 0x00); // Clear WSS interrupt bit
 	outp(IRQ_PIC_STATUS_REG, IRQ_PIC_END_OF_IRQ); // Acknowledge interrupt
 }
 
@@ -34,14 +34,17 @@ int player_init(void)
 	/* Set initial state */
 	state = PLAYER_STOPPED;
 
+	/* Initialize WSS */
+	wss_init();
+
 	/* Allocate PCM buffer */
 	err = buffer_allocate(&buffer);
 	if (err) {
-		return -ENOMEM;
+		return err;
 	}
 
 	/* Initialize IRQ handler */
-	irq_init(WSS_IRQ_NUM, player_irq_handler);
+	irq_init(wss_get_irq_number(), player_irq_handler);
 
 	return 0;
 }
@@ -52,8 +55,8 @@ void player_deinit(void)
 	player_stop();
 
 	/* Release resources */
-	dma_release(WSS_DMA_CHANNEL);
-	irq_release(WSS_IRQ_NUM);
+	dma_release(wss_get_dma_channel());
+	irq_release(wss_get_irq_number());
 
 	/* Free PCM buffer */
 	buffer_free(&buffer);
@@ -63,6 +66,7 @@ int player_start(const char *path)
 {
 	int err;
 	uint32_t bytes_read;
+	struct wss_playback_cfg_t playback_cfg;
 
 	/* Stopped player if not stopped yet */
 	if (state != PLAYER_STOPPED) {
@@ -92,10 +96,14 @@ int player_start(const char *path)
 	bytes_played += bytes_read;
 
 	/* Start DMA */
-	dma_autoinit_start(WSS_DMA_CHANNEL, buffer.page, buffer.offset, BUFFER_SIZE_BYTES);
+	dma_autoinit_start(wss_get_dma_channel(), buffer.page, buffer.offset, BUFFER_SIZE_BYTES);
 
 	/* Start playback */
-	err = wss_playback_start(BUFFER_SIZE_BYTES, wav_header.sample_rate, wav_header.num_channels);
+	playback_cfg.buffer_size = BUFFER_SIZE_BYTES;
+	playback_cfg.sample_rate = wav_header.sample_rate;
+	playback_cfg.bit_depth = wav_header.bit_depth;
+	playback_cfg.channels_num = wav_header.num_channels;
+	err = wss_playback_start(&playback_cfg);
 	if (err) {
 		fclose(fd);
 		return err;
@@ -153,6 +161,11 @@ int player_stop(void)
 	state = PLAYER_STOPPED;
 
 	return 0;
+}
+
+int player_set_volume(uint8_t percent)
+{
+	return wss_set_volume(percent);
 }
 
 enum player_state_t player_get_state(void)
