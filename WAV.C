@@ -55,11 +55,6 @@ int wav_parse_header(FILE *fd, struct wav_header_t *header)
 		return -EINVFMT;
 	}
 
-	/* Check if 16-bit PCM. TODO add 8-bit PCM support */
-	if (header->bit_depth != 16) {
-		return -EINVFMT;
-	}
-
 	/* Check if data header is valid. If it's not, we're probably dealing
 	 * with extended WAV header format containing metadata and we need to
 	 * manually search for the data chunk. */
