@@ -8,7 +8,7 @@
 
 #define WSS_TIMEOUT_LOOPS 10000
 #define WSS_BUFFERS_NUM 2 // Double buffering - generate interrupt when each half of buffer transferred
-#define WSS_DAC_ATTEN_LIMIT (WSS_DAC_ATTEN_MAX_VAL * 2 / 3) // Reduce the range as the lowest value are very quiet
+#define WSS_DAC_ATTEN_LIMIT (WSS_DAC_ATTEN_MAX_VAL / 2) // Reduce the range as the lowest values are very quiet
 
 /* Default WSS I/O config */
 #define WSS_DEFAULT_BASE 0x530
@@ -17,7 +17,7 @@
 
 struct wss_sample_rate_map_t
 {
-	uint32_t sample_rate;
+	uint16_t sample_rate;
 	uint8_t css;
 	uint8_t cfs;
 };
@@ -29,13 +29,13 @@ static uint8_t wss_dma_ch;
 /* WSS supports more, but these are the most popular */
 static const struct wss_sample_rate_map_t sample_rate_map[] =
 {
-	{8000UL,	0,		0},
-	{11025UL,	WSS_CSS_BIT,	WSS_CFS0_BIT},
-	{16000UL,	0,		WSS_CFS0_BIT},
-	{22050UL,	WSS_CSS_BIT,	WSS_CFS1_BIT | WSS_CFS0_BIT},
-	{32000UL,	0,		WSS_CFS1_BIT | WSS_CFS0_BIT},
-	{44100UL,	WSS_CSS_BIT,	WSS_CFS2_BIT | WSS_CFS0_BIT},
-	{48000UL,	0,		WSS_CFS2_BIT | WSS_CFS1_BIT}
+	{8000U,		0,				0},
+	{11025U,	WSS_CSS_BIT,	WSS_CFS0_BIT},
+	{16000U,	0,				WSS_CFS0_BIT},
+	{22050U,	WSS_CSS_BIT,	WSS_CFS1_BIT | WSS_CFS0_BIT},
+	{32000U,	0,				WSS_CFS1_BIT | WSS_CFS0_BIT},
+	{44100U,	WSS_CSS_BIT,	WSS_CFS2_BIT | WSS_CFS0_BIT},
+	{48000U,	0,				WSS_CFS2_BIT | WSS_CFS1_BIT}
 };
 
 static const struct wss_sample_rate_map_t *wss_get_sample_rate_config(uint32_t sample_rate)
@@ -280,7 +280,7 @@ int wss_playback_continue(void)
 int wss_set_volume(uint8_t percent)
 {
 	int err;
-	uint8_t reg_val;
+	uint8_t reg;
 
 	/* Sanity check */
 	if (percent > PERCENT_MAX) {
@@ -288,22 +288,22 @@ int wss_set_volume(uint8_t percent)
 	}
 
 	/* Map percent value to register value, handle mute case separately */
-	if (percent == 0) {
-		reg_val = WSS_DAC_MUTE_BIT;
+	if (percent == PERCENT_MIN) {
+		reg = WSS_DAC_MUTE_BIT;
 	}
 	else {
-		reg_val = MAP(percent, PERCENT_MIN, PERCENT_MAX, WSS_DAC_ATTEN_LIMIT, 0);
-		if (reg_val > WSS_DAC_ATTEN_MAX_VAL) {
-			reg_val = WSS_DAC_ATTEN_MAX_VAL;
+		reg = MAP(percent, PERCENT_MIN, PERCENT_MAX, WSS_DAC_ATTEN_LIMIT, 0);
+		if (reg > WSS_DAC_ATTEN_MAX_VAL) {
+			reg = WSS_DAC_ATTEN_MAX_VAL;
 		}
 	}
 
 	/* Write to sound card */
-	err = wss_write_indirect(WSS_LDAC_REG, reg_val);
+	err = wss_write_indirect(WSS_LDAC_REG, reg);
 	if (err) {
 		return err;
 	}
-	err = wss_write_indirect(WSS_RDAC_REG, reg_val);
+	err = wss_write_indirect(WSS_RDAC_REG, reg);
 	if (err) {
 		return err;
 	}

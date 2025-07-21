@@ -6,6 +6,7 @@
 #define WAV_WAVE_HEADER "WAVE"
 #define WAV_FMT_HEADER "fmt "
 #define WAV_DATA_HEADER "data"
+#define WAV_FORMAT_PCM 1
 
 /* Assume that no WAV header is longer than this value (that isn't necessarily true...) */
 #define WAV_DATA_MAX_HEADER_SIZE 512
@@ -36,6 +37,7 @@ int wav_parse_header(FILE *fd, struct wav_header_t *header)
 {
 	uint8_t buffer[WAV_DATA_MAX_HEADER_SIZE];
 	uint32_t data_offset;
+    size_t bytes_read;
 
 	/* Sanity checks */
 	if ((fd == NULL) || (header == NULL)) {
@@ -43,7 +45,10 @@ int wav_parse_header(FILE *fd, struct wav_header_t *header)
 	}
 
 	/* Read the header from file */
-	fread(buffer, sizeof(*buffer), sizeof(buffer), fd);
+	bytes_read = fread(buffer, 1, sizeof(buffer), fd);
+	if (bytes_read != sizeof(buffer)) {
+		return -EIO;
+	}
 
 	/* Load what should be a WAV header to the struct */
 	memcpy(header, buffer, sizeof(*header));
@@ -52,6 +57,11 @@ int wav_parse_header(FILE *fd, struct wav_header_t *header)
 	if ((memcmp(header->riff_header, WAV_RIFF_HEADER, sizeof(header->riff_header)) != 0) ||
 		(memcmp(header->wave_header, WAV_WAVE_HEADER, sizeof(header->wave_header)) != 0) ||
 		(memcmp(header->fmt_header, WAV_FMT_HEADER, sizeof(header->fmt_header)) != 0)) {
+		return -EINVFMT;
+	}
+
+	/* Check if PCM format */
+	if (header->audio_format != WAV_FORMAT_PCM) {
 		return -EINVFMT;
 	}
 

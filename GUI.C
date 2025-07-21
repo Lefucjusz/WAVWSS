@@ -47,13 +47,14 @@ static uint32_t gui_get_track_length(const char *path)
 		return 0;
 	}
 
-	/* Skips header and returns PCM data size */
+	/* Get WAV file metadata */
 	err = wav_parse_header(fd, &header);
+
+	fclose(fd);
+
 	if (err) {
 		return 0;
 	}
-
-	fclose(fd);
 
 	return (header.data_size / header.byte_rate);
 }

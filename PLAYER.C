@@ -16,7 +16,6 @@ static enum player_state_t state;
 static struct buffer_t buffer;
 static uint8_t buffer_index;
 static uint32_t bytes_played;
-static uint32_t bytes_total;
 static struct wav_header_t wav_header;
 static FILE *fd;
 
@@ -65,7 +64,7 @@ void player_deinit(void)
 int player_start(const char *path)
 {
 	int err;
-	uint32_t bytes_read;
+	size_t bytes_read;
 	struct wss_playback_cfg_t playback_cfg;
 
 	/* Stopped player if not stopped yet */
@@ -92,7 +91,7 @@ int player_start(const char *path)
 	}
 
 	/* Preload buffer */
-	bytes_read = fread(buffer.data, sizeof(*buffer.data), BUFFER_SIZE_BYTES, fd);
+	bytes_read = fread(buffer.data, 1, BUFFER_SIZE_BYTES, fd);
 	bytes_played += bytes_read;
 
 	/* Start DMA */
@@ -178,15 +177,10 @@ uint32_t player_get_seconds_played(void)
 	return bytes_played / wav_header.byte_rate;
 }
 
-uint32_t player_get_seconds_total(void)
-{
-	return bytes_total / wav_header.byte_rate;
-}
-
 void player_task(void)
 {
-	uint32_t offset;
-	uint32_t bytes_read;
+	size_t offset;
+	size_t bytes_read;
 
 	if (state != PLAYER_PLAYING) {
 		return;
@@ -195,7 +189,7 @@ void player_task(void)
 	if (wss_request) {
 		offset = buffer_index * PLAYER_SINGLE_BUFFER_SIZE;
 
-		bytes_read = fread(&buffer.data[offset], sizeof(*buffer.data), PLAYER_SINGLE_BUFFER_SIZE, fd);
+		bytes_read = fread(&buffer.data[offset], 1, PLAYER_SINGLE_BUFFER_SIZE, fd);
 		bytes_played += bytes_read;
 		if (bytes_read == 0) {
 			player_stop();
