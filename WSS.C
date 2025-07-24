@@ -255,7 +255,6 @@ int wss_playback_stop(void)
 	return 0;
 }
 
-
 int wss_playback_continue(void)
 {
 	int err;

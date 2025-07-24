@@ -67,7 +67,7 @@ int player_start(const char *path)
 	size_t bytes_read;
 	struct wss_playback_cfg_t playback_cfg;
 
-	/* Stopped player if not stopped yet */
+	/* Stop player if not stopped yet */
 	if (state != PLAYER_STOPPED) {
 		player_stop();
 	}

@@ -11,11 +11,11 @@
 /* Assume that no WAV header is longer than this value (that isn't necessarily true...) */
 #define WAV_DATA_MAX_HEADER_SIZE 512
 
-static uint32_t wav_search_data_chunk(const uint8_t *buffer, struct wav_header_t *header)
+static size_t wav_search_data_chunk(const uint8_t *buffer, struct wav_header_t *header)
 {
-	const uint16_t max_offset = WAV_DATA_MAX_HEADER_SIZE - sizeof(header->data_header);
-	uint16_t offset;
-	uint32_t data_offset;
+	const size_t max_offset = WAV_DATA_MAX_HEADER_SIZE - sizeof(header->data_header);
+	size_t offset;
+	size_t data_offset;
 
 	/* Search for data header */
 	for (offset = 0; offset < max_offset; ++offset) {
@@ -36,8 +36,8 @@ static uint32_t wav_search_data_chunk(const uint8_t *buffer, struct wav_header_t
 int wav_parse_header(FILE *fd, struct wav_header_t *header)
 {
 	uint8_t buffer[WAV_DATA_MAX_HEADER_SIZE];
-	uint32_t data_offset;
-    size_t bytes_read;
+	size_t data_offset;
+	size_t bytes_read;
 
 	/* Sanity checks */
 	if ((fd == NULL) || (header == NULL)) {
