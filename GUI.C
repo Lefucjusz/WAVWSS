@@ -124,12 +124,17 @@ int gui_init(const char *path)
 	int err;
 	struct gui_track_t *track;
 
-	/* Preserve current working directory and change it to the one provided by the user */
-	getcwd(prev_cwd, sizeof(prev_cwd));
-	err = chdir(path);
-	if (err) {
-		gui_deinit();
-		return -ENOENT;
+	/* Preserve current working directory and change it to the one
+	 * provided by the user. If no directory has been provided, use
+	 * the current one. */
+	if (path != NULL) {
+		getcwd(prev_cwd, sizeof(prev_cwd));
+
+		err = chdir(path);
+		if (err) {
+			gui_deinit();
+			return -ENOENT;
+		}
 	}
 
 	/* Create files list */

@@ -15,12 +15,16 @@ int main(int argc, char *argv[])
 	printf("WAVWSS - play WAV files through WSS compatible soundcard\n");
 	printf("(c) Lefucjusz, Warszawa 2025\n\n");
 
-	if (argc != 2) {
-		printf("Usage: %s path_to_directory_with_wav_files\n", argv[0]);
+	if (argc == 1) {
+		dir_path = NULL;
+	}
+	else if (argc == 2) {
+		dir_path = argv[1];
+	}
+	else {
+		printf("Usage: %s [path_to_directory_with_wav_files]\n", argv[0]);
 		return -EINVAL;
 	}
-
-	dir_path = argv[1];
 
 	err = player_init();
 	if (err) {
