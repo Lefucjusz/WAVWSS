@@ -6,8 +6,9 @@
 #include "stdbool.h"
 #include "utils.h"
 #include <errno.h>
-#include <stdio.h>
 #include <dos.h>
+#include <fcntl.h>
+#include <io.h>
 
 /* Double buffering */
 #define PLAYER_SINGLE_BUFFER_SIZE (BUFFER_SIZE_BYTES / 2)
@@ -20,7 +21,7 @@ static uint32_t bytes_played;
 static size_t pcm_data_offset;
 static struct wav_header_t wav_header;
 static struct wss_playback_cfg_t playback_cfg;
-static FILE *fd;
+static int fd = -1;
 
 static void interrupt player_irq_handler(void)
 {
@@ -31,14 +32,18 @@ static void interrupt player_irq_handler(void)
 
 static size_t player_fill_buffer(uint8_t *buffer, size_t size)
 {
-    size_t bytes_read;
+	int bytes_read;
 
-    bytes_read = fread(buffer, 1, size, fd);
-    if (bytes_read < size) {
-        memset(&buffer[bytes_read], 0, size - bytes_read);
-    }
+	bytes_read = read(fd, buffer, size);
+	if (bytes_read < 0) {
+		return 0;
+	}
 
-    return bytes_read;
+	if ((size_t)bytes_read < size) {
+		memset(&buffer[bytes_read], 0, size - bytes_read);
+	}
+
+	return (size_t)bytes_read;
 }
 
 int player_init(void)
@@ -91,8 +96,8 @@ int player_start(const char *path)
 	bytes_played = 0;
 
 	/* Open WAV file */
-	fd = fopen(path, "rb");
-	if (fd == NULL) {
+	fd = open(path, O_RDONLY | O_BINARY);
+	if (fd < 0) {
 		return -ENOENT;
 	}
 
@@ -128,8 +133,8 @@ int player_start(const char *path)
 
 out_error:
 	if (err) {
-		fclose(fd);
-		fd = NULL;
+		close(fd);
+		fd = -1;
 	}
 
 	return err;
@@ -174,9 +179,9 @@ int player_stop(void)
 	}
 
 	/* Close file if opened */
-	if (fd != NULL) {
-		fclose(fd);
-		fd = NULL;
+	if (fd >= 0) {
+		close(fd);
+		fd = -1;
 	}
 
 	state = PLAYER_STOPPED;
@@ -219,9 +224,8 @@ int player_seek_relative(int32_t seconds)
 	target_bytes -= target_bytes % frame_size; // Align to full frame
 
 	/* Seek to new position */
-	err = fseek(fd, pcm_data_offset + target_bytes, SEEK_SET);
-	if (err) {
-		return err;
+	if (lseek(fd, pcm_data_offset + target_bytes, SEEK_SET) < 0) {
+		return -EIO;
 	}
 
 	/* Update played size */

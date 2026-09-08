@@ -1,7 +1,6 @@
 #include "list.h"
 #include "gui.h"
 #include <errno.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <dir.h>
 

@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <conio.h>
 #include <dir.h>
-#include <stdio.h>
+#include <fcntl.h>
 
 #define GUI_PLAY_CHAR '>'
 #define GUI_PAUSE_CHAR '='
@@ -48,19 +48,19 @@ static bool gui_compare_ascending(const void *val1, const void *val2)
 static uint32_t gui_get_track_length(const char *path)
 {
 	int err;
-	FILE *fd;
+	int fd;
 	struct wav_header_t header;
 	size_t pcm_data_offset;
 
-	fd = fopen(path, "rb");
-	if (fd == NULL) {
+	fd = open(path, O_RDONLY | O_BINARY);
+	if (fd < 0) {
 		return 0;
 	}
 
 	/* Get WAV file metadata */
 	err = wav_parse_header(fd, &header, &pcm_data_offset);
 
-	fclose(fd);
+	close(fd);
 
 	if (err) {
 		return 0;

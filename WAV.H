@@ -1,8 +1,8 @@
 #ifndef __WAV_H__
 #define __WAV_H__
 
-#include <stdio.h>
 #include "stdint.h"
+#include <stddef.h>
 
 struct wav_header_t
 {
@@ -21,6 +21,6 @@ struct wav_header_t
 	uint32_t data_size;
 };
 
-int wav_parse_header(FILE *fd, struct wav_header_t *header, size_t *data_offset);
+int wav_parse_header(int fd, struct wav_header_t *header, size_t *data_offset);
 
 #endif

@@ -1,6 +1,7 @@
 #include "wav.h"
 #include <string.h>
 #include <errno.h>
+#include <io.h>
 
 #define WAV_RIFF_HEADER "RIFF"
 #define WAV_WAVE_HEADER "WAVE"
@@ -33,18 +34,18 @@ static size_t wav_search_data_chunk(const uint8_t *buffer, struct wav_header_t *
 	return 0;
 }
 
-int wav_parse_header(FILE *fd, struct wav_header_t *header, size_t *data_offset)
+int wav_parse_header(int fd, struct wav_header_t *header, size_t *data_offset)
 {
 	uint8_t buffer[WAV_DATA_MAX_HEADER_SIZE];
-	size_t bytes_read;
+	int bytes_read;
 
 	/* Sanity checks */
-	if ((fd == NULL) || (header == NULL)) {
+	if ((header == NULL) || (data_offset == NULL)) {
 		return -EINVAL;
 	}
 
 	/* Read the header from file */
-	bytes_read = fread(buffer, 1, sizeof(buffer), fd);
+	bytes_read = read(fd, buffer, sizeof(buffer));
 	if (bytes_read != sizeof(buffer)) {
 		return -EIO;
 	}
@@ -78,7 +79,7 @@ int wav_parse_header(FILE *fd, struct wav_header_t *header, size_t *data_offset)
 	}
 
 	/* Seek to the beginning of PCM data */
-	fseek(fd, *data_offset, SEEK_SET);
+	lseek(fd, *data_offset, SEEK_SET);
 
 	return 0;
 }
