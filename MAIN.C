@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
 
 	clrscr();
 	printf("WAVWSS - play WAV files through WSS compatible soundcard\n");
-	printf("(c) Lefucjusz, Warszawa 2025\n\n");
+	printf("(c) Lefucjusz, Warszawa 2025-2026\n\n");
 
 	if (argc == 1) {
 		dir_path = NULL;

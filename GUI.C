@@ -15,6 +15,8 @@
 #define GUI_VOLUME_STEP 2
 #define GUI_INITIAL_VOLUME 50
 
+#define GUI_SEEK_STEP_S 5
+
 struct gui_track_t
 {
 	char name[MEMBER_SIZE(struct ffblk, ff_name)];
@@ -41,6 +43,7 @@ static uint32_t gui_get_track_length(const char *path)
 	int err;
 	FILE *fd;
 	struct wav_header_t header;
+	size_t pcm_data_offset;
 
 	fd = fopen(path, "rb");
 	if (fd == NULL) {
@@ -48,7 +51,7 @@ static uint32_t gui_get_track_length(const char *path)
 	}
 
 	/* Get WAV file metadata */
-	err = wav_parse_header(fd, &header);
+	err = wav_parse_header(fd, &header, &pcm_data_offset);
 
 	fclose(fd);
 
@@ -102,8 +105,8 @@ static void gui_show_files_list(void)
 	printf("----------------------------\tControls:\n");
 	printf("---------- Tracks ----------\t[ESC] - leave to DOS\t[I] - previous track\n");
 	printf("----------------------------\t[Y] - volume down\t[O] - next track\n");
-	printf("|      Track      |  Time  |\t[U] - volume up\t\t[P] - pause/resume\n");
-	printf("|-----------------|--------|\n");
+	printf("|      Track      |  Time  |\t[U] - volume up\t\t[R] - rewind\n");
+	printf("|-----------------|--------|\t[P] - pause/resume\t[T] - forward\n");
 
 	do {
 		track = file->data;
@@ -259,16 +262,24 @@ int gui_task(void)
 			}
 			break;
 
-		case GUI_KEY_VOLUME_UP:
+		case GUI_KEY_VOL_UP:
 			volume += GUI_VOLUME_STEP;
 			volume = CLAMP(volume, PERCENT_MIN, PERCENT_MAX);
 			player_set_volume(volume);
 			break;
 
-		case GUI_KEY_VOLUME_DOWN:
+		case GUI_KEY_VOL_DOWN:
 			volume -= GUI_VOLUME_STEP;
 			volume = CLAMP(volume, PERCENT_MIN, PERCENT_MAX);
 			player_set_volume(volume);
+			break;
+
+		case GUI_KEY_FWD:
+			player_seek_relative(GUI_SEEK_STEP_S);
+			break;
+
+		case GUI_KEY_REW:
+			player_seek_relative(-GUI_SEEK_STEP_S);
 			break;
 
 		default:

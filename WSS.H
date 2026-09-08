@@ -24,9 +24,9 @@ int wss_write_indirect(uint8_t addr, uint8_t data);
 void wss_init(void);
 
 /* Playback control */
-int wss_playback_start(const struct wss_playback_cfg_t *cfg);
+int wss_playback_configure(const struct wss_playback_cfg_t *cfg);
+int wss_playback_start(void);
 int wss_playback_stop(void);
-int wss_playback_continue(void);
 
 /* Setters */
 int wss_set_volume(uint8_t percent);

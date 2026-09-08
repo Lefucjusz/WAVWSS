@@ -140,7 +140,7 @@ void wss_init(void)
 	wss_dma_ch = dma_ch;
 }
 
-int wss_playback_start(const struct wss_playback_cfg_t *cfg)
+int wss_playback_configure(const struct wss_playback_cfg_t *cfg)
 {
 	int err;
 	uint8_t format_reg;
@@ -220,7 +220,7 @@ int wss_playback_start(const struct wss_playback_cfg_t *cfg)
 	}
 
 	/* Configure interface */
-	err = wss_write_indirect(WSS_CONFIG_REG | WSS_MCE_BIT, WSS_PEN_BIT | WSS_ACAL_BIT); // Enable playback, perform calibration
+	err = wss_write_indirect(WSS_CONFIG_REG | WSS_MCE_BIT, WSS_ACAL_BIT); // Perform calibration
 	if (err) {
 		return err;
 	}
@@ -229,6 +229,27 @@ int wss_playback_start(const struct wss_playback_cfg_t *cfg)
 	wss_write_direct(WSS_INDEX_REG_OFFSET, WSS_TEST_INIT_REG); // Deassert MCE, select init register
 	while ((wss_read_direct(WSS_IDATA_REG_OFFSET) & WSS_ACI_BIT) != 0) {
 		continue;
+	}
+
+	return 0;
+}
+
+int wss_playback_start(void)
+{
+	int err;
+	uint8_t reg;
+
+	/* Read config register */
+	err = wss_read_indirect(WSS_CONFIG_REG, &reg);
+	if (err) {
+		return err;
+	}
+
+	/* Start playback */
+	reg |= WSS_PEN_BIT;
+	err = wss_write_indirect(WSS_CONFIG_REG, reg);
+	if (err) {
+		return err;
 	}
 
 	return 0;
@@ -247,27 +268,6 @@ int wss_playback_stop(void)
 
 	/* Stop playback */
 	reg &= ~WSS_PEN_BIT;
-	err = wss_write_indirect(WSS_CONFIG_REG, reg);
-	if (err) {
-		return err;
-	}
-
-	return 0;
-}
-
-int wss_playback_continue(void)
-{
-	int err;
-	uint8_t reg;
-
-	/* Read config register */
-	err = wss_read_indirect(WSS_CONFIG_REG, &reg);
-	if (err) {
-		return err;
-	}
-
-	/* Start playback */
-	reg |= WSS_PEN_BIT;
 	err = wss_write_indirect(WSS_CONFIG_REG, reg);
 	if (err) {
 		return err;

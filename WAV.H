@@ -21,6 +21,6 @@ struct wav_header_t
 	uint32_t data_size;
 };
 
-int wav_parse_header(FILE *fd, struct wav_header_t *header);
+int wav_parse_header(FILE *fd, struct wav_header_t *header, size_t *data_offset);
 
 #endif

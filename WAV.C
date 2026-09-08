@@ -33,10 +33,9 @@ static size_t wav_search_data_chunk(const uint8_t *buffer, struct wav_header_t *
 	return 0;
 }
 
-int wav_parse_header(FILE *fd, struct wav_header_t *header)
+int wav_parse_header(FILE *fd, struct wav_header_t *header, size_t *data_offset)
 {
 	uint8_t buffer[WAV_DATA_MAX_HEADER_SIZE];
-	size_t data_offset;
 	size_t bytes_read;
 
 	/* Sanity checks */
@@ -69,17 +68,17 @@ int wav_parse_header(FILE *fd, struct wav_header_t *header)
 	 * with extended WAV header format containing metadata and we need to
 	 * manually search for the data chunk. */
 	if (memcmp(header->data_header, WAV_DATA_HEADER, sizeof(header->data_header)) != 0) {
-		data_offset = wav_search_data_chunk(buffer, header);
-		if (data_offset == 0) {
+		*data_offset = wav_search_data_chunk(buffer, header);
+		if (*data_offset == 0) {
 			return -EINVFMT;
 		}
 	}
 	else {
-		data_offset = sizeof(*header);
+		*data_offset = sizeof(*header);
 	}
 
 	/* Seek to the beginning of PCM data */
-	fseek(fd, data_offset, SEEK_SET);
+	fseek(fd, *data_offset, SEEK_SET);
 
 	return 0;
 }
