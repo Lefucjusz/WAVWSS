@@ -19,6 +19,7 @@ format, it's possible to use it to play CD-quality WAV files (44.1kHz, 16-bit st
 * Simple text-mode GUI with:
   - Pause/resume functionality
   - Previous/next track switching
+  - Seeking in 5s steps
   - Volume control
 * Runs even on 8086/8088-based machines
 
