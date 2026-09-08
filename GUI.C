@@ -17,6 +17,10 @@
 
 #define GUI_SEEK_STEP_S 5
 
+/* Set to 1 to refresh the "Now playing" line immediately when volume changes.
+ * This may cause audio buffer underruns on slower machines such as Xi8088. */
+#define GUI_REFRESH_ON_VOLUME_CHANGE 0
+
 struct gui_track_t
 {
 	char name[MEMBER_SIZE(struct ffblk, ff_name)];
@@ -29,6 +33,9 @@ static uint32_t last_elapsed_time;
 static enum player_state_t last_player_state;
 static char prev_cwd[128];
 static int8_t volume;
+#if GUI_REFRESH_ON_VOLUME_CHANGE
+static int8_t last_volume;
+#endif
 
 static bool gui_compare_ascending(const void *val1, const void *val2)
 {
@@ -182,14 +189,17 @@ int gui_task(void)
 	uint32_t elapsed_time;
 	enum player_state_t player_state;
 
-	/* Update track info. This should refresh also if the volume
-	 * has been changed, but on Xi8088 this causes audio buffer
-	 * underruns if the volume is changed quickly. On faster
-	 * machines this shouldn't be an issue. */
+	/* Update track info */
 	elapsed_time = player_get_seconds_played();
 	player_state = player_get_state();
+#if GUI_REFRESH_ON_VOLUME_CHANGE
+	if ((last_elapsed_time != elapsed_time) ||
+		(last_player_state != player_state) ||
+		(last_volume != volume)) {
+#else
 	if ((last_elapsed_time != elapsed_time) ||
 		(last_player_state != player_state)) {
+#endif
 		track = current->data;
 		track_state = (player_state == PLAYER_PLAYING) ? GUI_PLAY_CHAR : GUI_PAUSE_CHAR;
 
@@ -197,6 +207,9 @@ int gui_task(void)
 
 		last_elapsed_time = elapsed_time;
 		last_player_state = player_state;
+#if GUI_REFRESH_ON_VOLUME_CHANGE
+		last_volume = volume;
+#endif
 	}
 
 	/* Play next song if previous has ended */
