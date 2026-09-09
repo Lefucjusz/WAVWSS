@@ -5,6 +5,7 @@
 #include "buffer.h"
 #include "stdbool.h"
 #include "utils.h"
+#include "settings.h"
 #include <errno.h>
 #include <dos.h>
 #include <fcntl.h>
@@ -64,6 +65,12 @@ int player_init(void)
 
 	/* Initialize IRQ handler */
 	irq_init(wss_get_irq_number(), player_irq_handler);
+
+	/* Set volume */
+	err = wss_set_volume(settings_get_volume());
+	if (err) {
+		return err;
+	}
 
 	return 0;
 }
@@ -191,7 +198,25 @@ int player_stop(void)
 
 int player_set_volume(uint8_t percent)
 {
-	return wss_set_volume(percent);
+	int err;
+
+	err = wss_set_volume(percent);
+	if (err) {
+		return err;
+	}
+
+	settings_set_volume(percent);
+	err = settings_sync();
+	if (err) {
+		return err;
+	}
+
+	return 0;
+}
+
+uint8_t player_get_volume(void)
+{
+	return settings_get_volume();
 }
 
 int player_seek_relative(int32_t seconds)

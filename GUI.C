@@ -157,9 +157,8 @@ int gui_init(const char *path)
 	/* Show files list */
 	gui_show_files_list();
 
-	/* Set volume */
-	volume = GUI_INITIAL_VOLUME;
-	player_set_volume(volume);
+	/* Get current volume */
+	volume = player_get_volume();
 
 	/* Start playback of the first song */
 	current = files->head;

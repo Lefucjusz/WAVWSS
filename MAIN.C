@@ -25,6 +25,12 @@ int main(int argc, char *argv[])
 		return -EINVAL;
 	}
 
+	err = settings_init(argv[0]);
+	if (err) {
+		printf("Failed to init settings module, error %d!\n", err);
+		goto out_error;
+	}
+
 	err = player_init();
 	if (err) {
 		printf("Failed to init player module, error %d!\n", err);
@@ -50,6 +56,7 @@ int main(int argc, char *argv[])
 out_error:
 	gui_deinit();
 	player_deinit();
+	settings_deinit();
 
 	return err;
 }
