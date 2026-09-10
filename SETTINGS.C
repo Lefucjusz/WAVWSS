@@ -52,8 +52,6 @@ int settings_init(const char *exe_path)
 		return err;
 	}
 
-	printf("Got path: %s\n", settings_path);
-
 	/* Open settings file */
 	fd = open(settings_path, O_RDWR | O_CREAT | O_BINARY, S_IREAD | S_IWRITE);
 	if (fd < 0) {
@@ -78,49 +76,49 @@ int settings_init(const char *exe_path)
 
 int settings_deinit(void)
 {
-    int err;
+	int err;
 
-    err = settings_sync();
+	err = settings_sync();
 
-    close(fd);
-    fd = -1;
+	close(fd);
+	fd = -1;
 
-    return err;
+	return err;
 }
 
 uint32_t settings_get_played_seconds(void)
 {
-    return data.seconds_played;
+	return data.seconds_played;
 }
 
 void settings_add_played_second(void)
 {
-    ++data.seconds_played;
+	++data.seconds_played;
 }
 
 uint8_t settings_get_volume(void)
 {
-    return data.volume;
+	return data.volume;
 }
 
 void settings_set_volume(uint8_t volume)
 {
-    data.volume = volume;
+	data.volume = volume;
 }
 
 int settings_sync(void)
 {
-    if (fd < 0) {
-        return -EBADF;
-    }
+	if (fd < 0) {
+		return -EBADF;
+	}
 
-    if (lseek(fd, 0, SEEK_SET) < 0) {
-        return -EIO;
-    }
+	if (lseek(fd, 0, SEEK_SET) < 0) {
+		return -EIO;
+	}
 
-    if (write(fd, &data, sizeof(data)) != sizeof(data)) {
-        return -EIO;
-    }
+	if (write(fd, &data, sizeof(data)) != sizeof(data)) {
+		return -EIO;
+	}
 
-    return 0;
+	return 0;
 }

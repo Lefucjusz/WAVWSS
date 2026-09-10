@@ -14,6 +14,8 @@
 /* Double buffering */
 #define PLAYER_SINGLE_BUFFER_SIZE (BUFFER_SIZE_BYTES / 2)
 
+#define PLAYER_TOTAL_TIME_SAVE_INTERVAL_S 30
+
 static volatile bool wss_request;
 static enum player_state_t state;
 static struct buffer_t buffer;
@@ -22,6 +24,8 @@ static uint32_t bytes_played;
 static size_t pcm_data_offset;
 static struct wav_header_t wav_header;
 static struct wss_playback_cfg_t playback_cfg;
+static uint32_t last_elapsed_time;
+static uint32_t last_sync_time;
 static int fd = -1;
 
 static void interrupt player_irq_handler(void)
@@ -291,12 +295,15 @@ void player_task(void)
 {
 	size_t offset;
 	size_t bytes_read;
+	uint32_t elapsed_time;
 
 	if (state != PLAYER_PLAYING) {
 		return;
 	}
 
 	if (wss_request) {
+		wss_request = false;
+
 		bytes_played += PLAYER_SINGLE_BUFFER_SIZE;
 		offset = buffer_index * PLAYER_SINGLE_BUFFER_SIZE;
 
@@ -306,6 +313,18 @@ void player_task(void)
 		}
 
 		buffer_index ^= 1;
-		wss_request = false;
+
+		/* Update total play time counter */
+		elapsed_time = player_get_seconds_played();
+		if (elapsed_time != last_elapsed_time) {
+			settings_add_played_second();
+			last_elapsed_time = elapsed_time;
+		}
+
+		/* Sync to disk */
+		if (elapsed_time >= (last_sync_time + PLAYER_TOTAL_TIME_SAVE_INTERVAL_S)) {
+			settings_sync();
+			last_sync_time = elapsed_time;
+		}
 	}
 }
