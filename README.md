@@ -122,3 +122,5 @@ The program is controlled via keyboard:
 * `P` - pause/resume
 * `Y` - volume down
 * `U` - volume up
+* `R` - rewind
+* `T` - forward
